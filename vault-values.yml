@@ -1,0 +1,130 @@
+# Vault Helm Chart Value Overrides
+global:
+  enabled: true
+  tlsDisable: false
+
+injector:
+  enabled: true
+  image:
+    repository: "hashicorp/vault-k8s"
+    tag: "latest"
+
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 250m
+    limits:
+      memory: 256Mi
+      cpu: 250m
+
+server:
+  image:
+    repository: "vault"
+    tag: "1.12.1"
+
+  resources:
+    requests:
+      memory: 8Gi
+      cpu: 2000m
+    limits:
+      memory: 16Gi
+      cpu: 2000m
+
+  readinessProbe:
+    enabled: true
+    path: "/v1/sys/health?standbyok=true&sealedcode=204&uninitcode=204"
+
+  extraEnvironmentVars:
+    VAULT_CACERT: /vault/userconfig/vault-tls/vault.ca
+    VAULT_TLSCERT: /vault/userconfig/vault-tls/vault.crt
+    VAULT_TLSKEY: /vault/userconfig/vault-tls/vault.key
+
+  volumes:
+    - name: vault-tls
+      secret:
+        defaultMode: 420
+        secretName: vault-tls
+
+  volumeMounts:
+    - mountPath: /vault/userconfig/vault-tls
+      name: vault-tls
+      readOnly: true
+
+  auditStorage:
+    enabled: true
+
+  standalone:
+    enabled: true
+    config: |
+      ui = true
+      listener "tcp" {
+        address = "[::]:8200"
+        cluster_address = "[::]:8201"
+        tls_cert_file = "/vault/userconfig/vault-tls/vault.crt"
+        tls_key_file = "/vault/userconfig/vault-tls/vault.key"
+        tls_client_ca_file = "/vault/userconfig/vault-tls/vault.ca"
+        tls_require_and_verify_client_cert = false
+        tls_disable_client_certs = true
+      }
+
+      storage "file" {
+        path = "/vault/data"
+      }
+
+  ha:
+    enabled: false
+    replicas: 5
+    raft:
+      enabled: true
+      setNodeId: true
+
+      config: |
+        ui = true
+        listener "tcp" {
+          address = "[::]:8200"
+          cluster_address = "[::]:8201"
+          tls_cert_file = "/vault/userconfig/vault-tls/vault.crt"
+          tls_key_file = "/vault/userconfig/vault-tls/vault.key"
+          tls_client_ca_file = "/vault/userconfig/vault-tls/vault.ca"
+          tls_require_and_verify_client_cert = false
+          tls_disable_client_certs = true
+        }
+
+        storage "raft" {
+          path = "/vault/data"
+            retry_join {
+            leader_api_addr = "https://vault-0.vault-internal:8200"
+          }
+          retry_join {
+            leader_api_addr = "https://vault-1.vault-internal:8200"
+          }
+          retry_join {
+            leader_api_addr = "https://vault-2.vault-internal:8200"
+          }
+          retry_join {
+            leader_api_addr = "https://vault-3.vault-internal:8200"
+          }
+          retry_join {
+            leader_api_addr = "https://vault-4.vault-internal:8200"
+          }
+
+          autopilot {
+            cleanup_dead_servers = "true"
+            last_contact_threshold = "5s"
+            last_contact_failure_threshold = "10m"
+            max_trailing_logs = 100000
+            min_quorum = 5
+            server_stabilization_time = "1m"
+          }
+
+        }
+
+        service_registration "kubernetes" {}
+
+ui:
+  enabled: true
+  activeVaultPodOnly: true
+  serviceType: "ClusterIP"
+  serviceNodePort: 32200
+  externalPort: 8200
+  targetPort: 8200
