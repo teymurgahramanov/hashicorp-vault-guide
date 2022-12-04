@@ -45,9 +45,17 @@ server:
         defaultMode: 420
         secretName: vault-tls
 
+    - name: time
+      hostPath:
+        path: /etc/localtime
+
   volumeMounts:
-    - mountPath: /vault/userconfig/vault-tls
-      name: vault-tls
+    - name: time
+      mountPath: /etc/localtime
+      readOnly: true
+
+    - name: vault-tls
+      mountPath: /vault/userconfig/vault-tls
       readOnly: true
 
   auditStorage:
