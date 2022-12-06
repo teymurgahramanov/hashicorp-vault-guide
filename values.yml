@@ -5,6 +5,7 @@ global:
 
 injector:
   enabled: true
+  replicas: 1
   image:
     repository: "hashicorp/vault-k8s"
     tag: "latest"
@@ -16,6 +17,16 @@ injector:
     limits:
       memory: 256Mi
       cpu: 250m
+
+  affinity: |
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: {{ template "vault.name" . }}-agent-injector
+            app.kubernetes.io/instance: "{{ .Release.Name }}"
+            component: webhook
+        topologyKey: kubernetes.io/hostname
 
 server:
   image:
@@ -58,8 +69,32 @@ server:
       mountPath: /vault/userconfig/vault-tls
       readOnly: true
 
-  auditStorage:
+  ingress:
+    enabled: false
+    annotations:
+      kubernetes.io/ingress.class: nginx
+    tls:
+      - hosts:
+          - vault.example.com
+        secretName: vault-tls
+
+  dataStorage:
     enabled: true
+    size: 10Gi
+    storageClass: default
+
+  auditStorage:
+    enabled: false
+
+  affinity: |
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: {{ template "vault.name" . }}
+          app.kubernetes.io/instance: "{{ .Release.Name }}"
+          component: server
+        topologyKey: kubernetes.io/hostname
 
   standalone:
     enabled: true
@@ -109,13 +144,19 @@ server:
           retry_join {
             leader_api_addr = "https://vault-2.vault-internal:8200"
           }
+          retry_join {
+            leader_api_addr = "https://vault-3.vault-internal:8200"
+          }
+          retry_join {
+            leader_api_addr = "https://vault-4.vault-internal:8200"
+          }
 
           autopilot {
             cleanup_dead_servers = "true"
             last_contact_threshold = "5s"
             last_contact_failure_threshold = "10m"
             max_trailing_logs = 100000
-            min_quorum = 5
+            min_quorum = 3
             server_stabilization_time = "1m"
           }
 

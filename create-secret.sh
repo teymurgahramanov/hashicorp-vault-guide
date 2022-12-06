@@ -5,6 +5,8 @@ export SECRET_NAME=vault-tls
 export TMPDIR=/tmp
 export CSR_NAME=vault-csr
 
+read -p "Enter Ingress Hostname: " INGRESS_HOST
+
 echo "Secret $SECRET_NAME will be created for service $SERVICE in $NAMESPACE namespace."
 ###
 
@@ -29,6 +31,7 @@ DNS.1 = ${SERVICE}
 DNS.2 = ${SERVICE}.${NAMESPACE}
 DNS.3 = ${SERVICE}.${NAMESPACE}.svc
 DNS.4 = ${SERVICE}.${NAMESPACE}.svc.cluster.local
+DNS.5 = ${INGRESS_HOST}
 IP.1 = 127.0.0.1
 EOF
 openssl req -new -key ${TMPDIR}/vault.key \

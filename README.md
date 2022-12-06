@@ -2,10 +2,31 @@ Hashicorp Vault Guide
 
 
 ## Install Vault
-Generate secret for enabling TLS
+__Generate TLS secret__
 ```
 bash create-secret.sh
 ```
+
+__Prepare environment__
+```
+kubectl create namespace vault
+helm repo add hashicorp https://helm.releases.hashicorp.com
+helm repo update
+```
+__Install Standalone (Docker Desktop/Minikube)__
+```
+helm upgrade --install vault hashicorp/vault --namespace vault -f values.yml --set ui.serviceType=NodePort --set server.resources.requests.memory=2Gi --set server.resources.requests.cpu=1000m
+```
+Access: https://localhost:32200
+__Install Cluster (Test/Dev)__
+```
+helm upgrade --install vault hashicorp/vault --namespace vault -f values.yml --set ingress.enabled=true --set ingress.tls.hosts={vault.example.com} --set server.resources.requests.memory=2Gi --set server.resources.requests.cpu=1000m --set injector.replicas=(number of nodes) --set ha.enabled=true --set ha.replicas=(number of nodes)
+```
+__Install Cluster (Prod)__
+```
+helm upgrade --install vault hashicorp/vault --namespace vault -f values.yml --set ingress.enabled=true --set ingress.tls.hosts={vault.example.com} --set injector.replicas=(number of nodes) --set ha.enabled=true --set ha.replicas=(number of nodes)
+```
+
 
 ## How Vault works inside Kubernetes
 ## Install Bank-Vaults Mutating Webhook
