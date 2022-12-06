@@ -168,6 +168,5 @@ ui:
   enabled: true
   activeVaultPodOnly: true
   serviceType: "ClusterIP"
-  serviceNodePort: 32200
   externalPort: 8200
   targetPort: 8200
