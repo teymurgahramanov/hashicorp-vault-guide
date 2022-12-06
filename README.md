@@ -2,16 +2,15 @@ Hashicorp Vault Guide
 
 
 ## Install Vault
-__Generate TLS secret__
-```
-bash create-secret.sh
-```
-
 __Prepare environment__
 ```
 kubectl create namespace vault
 helm repo add hashicorp https://helm.releases.hashicorp.com
 helm repo update
+```
+__Generate TLS secret__
+```
+bash create-secret.sh
 ```
 __Install Standalone (Docker Desktop/Minikube)__
 ```
