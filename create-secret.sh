@@ -1,11 +1,17 @@
 # Source: https://developer.hashicorp.com/vault/docs/platform/k8s/helm/examples/standalone-tls
+if [ -z "$1" ]
+  then
+    echo "ERROR: Ingress Hostname not provided."
+    echo "Example: create-secret.sh vault.exmaple.com"
+    exit 1
+fi
+
 export SERVICE=vault
 export NAMESPACE=vault
 export SECRET_NAME=vault-tls
 export TMPDIR=/tmp
 export CSR_NAME=vault-csr
-
-read -p "Enter Ingress Hostname: " INGRESS_HOST
+export INGRESS_HOST=$1
 
 echo "Secret $SECRET_NAME will be created for service $SERVICE in $NAMESPACE namespace."
 ###
@@ -56,7 +62,7 @@ spec:
   - key encipherment
   - server auth
 EOF
-kubectl create -f ${TMPDIR}/csr.yaml > /dev/null 2>&1
+kubectl create -f ${TMPDIR}/csr.yaml
 
 kubectl get csr ${CSR_NAME} > /dev/null 2>&1
 if [ $? != 0 ]
@@ -67,7 +73,7 @@ fi
 
 echo "Approving CSR"
 ###
-kubectl certificate approve ${CSR_NAME} > /dev/null 2>&1
+kubectl certificate approve ${CSR_NAME}
 
 echo "Creating secret"
 ###

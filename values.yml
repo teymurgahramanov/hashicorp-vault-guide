@@ -75,13 +75,13 @@ server:
       kubernetes.io/ingress.class: nginx
     tls:
       - hosts:
-          - vault.example.com
+          - vault.vault
         secretName: vault-tls
 
   dataStorage:
     enabled: true
     size: 10Gi
-    storageClass: default
+    storageClass: hostpath
 
   auditStorage:
     enabled: false
@@ -90,10 +90,10 @@ server:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
       - labelSelector:
-        matchLabels:
-          app.kubernetes.io/name: {{ template "vault.name" . }}
-          app.kubernetes.io/instance: "{{ .Release.Name }}"
-          component: server
+          matchLabels:
+            app.kubernetes.io/name: {{ template "vault.name" . }}
+            app.kubernetes.io/instance: "{{ .Release.Name }}"
+            component: server
         topologyKey: kubernetes.io/hostname
 
   standalone:
