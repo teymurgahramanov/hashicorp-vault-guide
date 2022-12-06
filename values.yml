@@ -58,7 +58,7 @@ server:
     - name: vault-tls
       secret:
         defaultMode: 420
-        secretName: vault-tls
+        secretName: vault-tls-server
 
   volumeMounts:
     - name: time
@@ -73,10 +73,12 @@ server:
     enabled: false
     annotations:
       kubernetes.io/ingress.class: nginx
+    hosts:
+      - host: vault.example.com
     tls:
       - hosts:
-          - vault.vault
-        secretName: vault-tls
+          - vault.example.com
+        secretName: vault-tls-ingress
 
   dataStorage:
     enabled: true

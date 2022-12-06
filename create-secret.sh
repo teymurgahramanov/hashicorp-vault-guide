@@ -13,7 +13,6 @@ export TMPDIR=/tmp
 export CSR_NAME=vault-csr
 export INGRESS_HOST=$1
 
-echo "Secret $SECRET_NAME will be created for service $SERVICE in $NAMESPACE namespace."
 ###
 
 echo "Genearting key"
@@ -75,26 +74,30 @@ echo "Approving CSR"
 ###
 kubectl certificate approve ${CSR_NAME}
 
-echo "Creating secret"
+echo "Creating secrets for server and ingress"
 ###
+
 serverCert=$(kubectl get csr ${CSR_NAME} -o jsonpath='{.status.certificate}')
+
 echo "${serverCert}" | openssl base64 -d -A -out ${TMPDIR}/vault.crt
+
 kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[].cluster.certificate-authority-data}' | base64 -d > ${TMPDIR}/vault.ca
+
 kubectl create namespace ${NAMESPACE} > /dev/null 2>&1
-kubectl create secret generic ${SECRET_NAME} \
-    --namespace ${NAMESPACE} \
+
+kubectl -n ${NAMESPACE} create secret generic ${SECRET_NAME}-server \
     --from-file=vault.key=${TMPDIR}/vault.key \
     --from-file=vault.crt=${TMPDIR}/vault.crt \
     --from-file=vault.ca=${TMPDIR}/vault.ca > /dev/null 2>&1
-kubectl -n $NAMESPACE get secret $SECRET_NAME > /dev/null 2>&1
-if [ $? == 0 ]
-then
-  echo "SUCCESS: Secret $SECRET_NAME for service $SERVICE has been created." >&2
-else
-  echo "FAIL: Secret not created."
-fi
+
+kubectl -n ${NAMESPACE} create secret tls ${SECRET_NAME}-ingress \
+  --cert=${TMPDIR}/vault.crt \
+  --key=${TMPDIR}/vault.key
+
+kubectl -n $NAMESPACE get secrets
 
 echo "Cleaning"
 ###
+kubectl delete csr ${CSR_NAME}
 rm -f ${TMPDIR}/vault.{key,crt,ca}
 rm -f ${TMPDIR}/{server.csr,csr.conf,csr.yaml}
