@@ -40,14 +40,14 @@ server:
     VAULT_TLSKEY: /vault/userconfig/vault-tls/vault.key
 
   volumes:
+    - name: time
+      hostPath:
+        path: /etc/localtime
+
     - name: vault-tls
       secret:
         defaultMode: 420
         secretName: vault-tls
-
-    - name: time
-      hostPath:
-        path: /etc/localtime
 
   volumeMounts:
     - name: time
@@ -81,7 +81,7 @@ server:
 
   ha:
     enabled: false
-    replicas: 5
+    replicas: 3
     raft:
       enabled: true
       setNodeId: true
@@ -100,7 +100,7 @@ server:
 
         storage "raft" {
           path = "/vault/data"
-            retry_join {
+          retry_join {
             leader_api_addr = "https://vault-0.vault-internal:8200"
           }
           retry_join {
@@ -108,12 +108,6 @@ server:
           }
           retry_join {
             leader_api_addr = "https://vault-2.vault-internal:8200"
-          }
-          retry_join {
-            leader_api_addr = "https://vault-3.vault-internal:8200"
-          }
-          retry_join {
-            leader_api_addr = "https://vault-4.vault-internal:8200"
           }
 
           autopilot {

@@ -88,3 +88,4 @@ fi
 echo "Cleaning"
 ###
 rm -f ${TMPDIR}/vault.{key,crt,ca}
+rm -f ${TMPDIR}/{server.csr,csr.conf,csr.yaml}
