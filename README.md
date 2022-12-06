@@ -15,16 +15,16 @@ bash create-secret.sh vault.example.com
 ```
 __Install Standalone (Docker Desktop/Minikube)__
 ```
-helm upgrade --install vault hashicorp/vault --namespace vault -f values.yml --set ui.serviceType=NodePort --set server.resources.requests.memory=2Gi --set server.resources.requests.cpu=1000m
+helm upgrade --install vault hashicorp/vault --namespace vault -f values.yml --set dataStorage.size=5Gi --set dataStorage.storageClass=yourStorageClass --set ui.serviceType=NodePort --set server.resources.requests.memory=2Gi --set server.resources.requests.cpu=1000m
 ```
 Access: https://localhost:32200
 __Install Cluster (Test/Dev)__
 ```
-helm upgrade --install vault hashicorp/vault --namespace vault -f values.yml --set ingress.enabled=true --set ingress.tls.hosts={vault.example.com} --set server.resources.requests.memory=2Gi --set server.resources.requests.cpu=1000m --set injector.replicas=(number of nodes) --set ha.enabled=true --set ha.replicas=(number of nodes)
+helm upgrade --install vault hashicorp/vault --namespace vault -f values.yml --set dataStorage.size=5Gi --set dataStorage.storageClass=yourStorageClass --set ingress.enabled=true --set ingress.tls.hosts={vault.example.com} --set server.resources.requests.memory=2Gi --set server.resources.requests.cpu=1000m --set injector.replicas=(number of nodes) --set ha.enabled=true --set ha.replicas=(number of nodes)
 ```
 __Install Cluster (Prod)__
 ```
-helm upgrade --install vault hashicorp/vault --namespace vault -f values.yml --set ingress.enabled=true --set ingress.tls.hosts={vault.example.com} --set injector.replicas=(number of nodes) --set ha.enabled=true --set ha.replicas=(number of nodes)
+helm upgrade --install vault hashicorp/vault --namespace vault -f values.yml --set dataStorage.size=5Gi --set dataStorage.storageClass=yourStorageClass --set ingress.enabled=true --set ingress.tls.hosts={vault.example.com} --set injector.replicas=(number of nodes) --set ha.enabled=true --set ha.replicas=(number of nodes)
 ```
 
 helm repo add banzaicloud-stable https://kubernetes-charts.banzaicloud.com
