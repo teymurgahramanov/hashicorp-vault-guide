@@ -32,9 +32,13 @@ subjectAltName = @alt_names
 [alt_names]
 DNS.1 = ${SERVICE}
 DNS.2 = ${INGRESS_HOST}
-DNS.3 = *.${NAMESPACE}
-DNS.4 = *.${NAMESPACE}.svc
-DNS.5 = *.${NAMESPACE}.svc.cluster.local
+DNS.3 = *.vault-internal
+DNS.4 = *.vault-internal.${NAMESPACE}
+DNS.5 = *.vault-internal.${NAMESPACE}.svc
+DNS.6 = *.vault-internal.${NAMESPACE}.svc.cluster.local
+DNS.7 = *.${NAMESPACE}
+DNS.8 = *.${NAMESPACE}.svc
+DNS.9 = *.${NAMESPACE}.svc.cluster.local
 IP.1 = 127.0.0.1
 EOF
 openssl req -new -key ${TMPDIR}/vault.key \
