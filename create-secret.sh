@@ -13,8 +13,6 @@ export TMPDIR=/tmp
 export CSR_NAME=vault-csr
 export INGRESS_HOST=$1
 
-###
-
 echo "Genearting key"
 ###
 openssl genrsa -out ${TMPDIR}/vault.key 2048 > /dev/null 2>&1
@@ -33,10 +31,10 @@ extendedKeyUsage = serverAuth
 subjectAltName = @alt_names
 [alt_names]
 DNS.1 = ${SERVICE}
-DNS.2 = ${SERVICE}.${NAMESPACE}
-DNS.3 = ${SERVICE}.${NAMESPACE}.svc
-DNS.4 = ${SERVICE}.${NAMESPACE}.svc.cluster.local
-DNS.5 = ${INGRESS_HOST}
+DNS.2 = ${INGRESS_HOST}
+DNS.3 = *.${NAMESPACE}
+DNS.4 = *.${NAMESPACE}.svc
+DNS.5 = *.${NAMESPACE}.svc.cluster.local
 IP.1 = 127.0.0.1
 EOF
 openssl req -new -key ${TMPDIR}/vault.key \
@@ -85,12 +83,10 @@ kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[].cluster.c
 
 kubectl create namespace ${NAMESPACE} > /dev/null 2>&1
 
-kubectl -n ${NAMESPACE} create secret generic ${SECRET_NAME}-server \
-    --from-file=vault.key=${TMPDIR}/vault.key \
-    --from-file=vault.crt=${TMPDIR}/vault.crt \
-    --from-file=vault.ca=${TMPDIR}/vault.ca > /dev/null 2>&1
+kubectl -n ${NAMESPACE} create secret generic ${SECRET_NAME}-ca \
+  --from-file=vault.ca=${TMPDIR}/vault.ca > /dev/null 2>&1
 
-kubectl -n ${NAMESPACE} create secret tls ${SECRET_NAME}-ingress \
+kubectl -n ${NAMESPACE} create secret tls ${SECRET_NAME}-server \
   --cert=${TMPDIR}/vault.crt \
   --key=${TMPDIR}/vault.key
 
