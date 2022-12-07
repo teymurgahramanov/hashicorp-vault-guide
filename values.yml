@@ -10,6 +10,9 @@ injector:
     repository: "hashicorp/vault-k8s"
     tag: "latest"
 
+  extraLabels:
+    'app': 'vault-injector'
+
   resources:
     requests:
       memory: 256Mi
@@ -33,6 +36,9 @@ server:
     repository: "vault"
     tag: "1.12.1"
 
+  extraLabels:
+    'app': 'vault-server'
+
   resources:
     requests:
       memory: 8Gi
@@ -44,41 +50,55 @@ server:
   readinessProbe:
     enabled: true
     path: "/v1/sys/health?standbyok=true&sealedcode=204&uninitcode=204"
+  livenessProbe:
+    enabled: true
+    path: "/v1/sys/health?standbyok=true"
+    initialDelaySeconds: 60
 
   extraEnvironmentVars:
-    VAULT_CACERT: /vault/userconfig/vault-tls/vault.ca
-    VAULT_TLSCERT: /vault/userconfig/vault-tls/vault.crt
-    VAULT_TLSKEY: /vault/userconfig/vault-tls/vault.key
+    VAULT_CACERT: /vault/userconfig/vault-tls-ca/ca.crt
+    VAULT_TLSCERT: /vault/userconfig/vault-tls-crt/tls.crt
+    VAULT_TLSKEY: /vault/userconfig/vault-tls-crt/tls.key
 
   volumes:
     - name: time
       hostPath:
         path: /etc/localtime
 
-    - name: vault-tls
+    - name: vault-tls-ca
       secret:
         defaultMode: 420
-        secretName: vault-tls-server
+        secretName: vault-tls-ca
+
+    - name: vault-tls-crt
+      secret:
+        defaultMode: 420
+        secretName: vault-tls-crt
 
   volumeMounts:
     - name: time
       mountPath: /etc/localtime
       readOnly: true
 
-    - name: vault-tls
-      mountPath: /vault/userconfig/vault-tls
+    - name: vault-tls-ca
+      mountPath: /vault/userconfig/vault-tls-ca
+      readOnly: true
+
+    - name: vault-tls-crt
+      mountPath: /vault/userconfig/vault-tls-crt
       readOnly: true
 
   ingress:
     enabled: false
     annotations:
       kubernetes.io/ingress.class: nginx
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     hosts:
       - host: vault.example.com
     tls:
       - hosts:
           - vault.example.com
-        secretName: vault-tls-ingress
+        secretName: vault-tls-crt
 
   dataStorage:
     enabled: true
@@ -104,11 +124,10 @@ server:
       listener "tcp" {
         address = "[::]:8200"
         cluster_address = "[::]:8201"
-        tls_cert_file = "/vault/userconfig/vault-tls/vault.crt"
-        tls_key_file = "/vault/userconfig/vault-tls/vault.key"
-        tls_client_ca_file = "/vault/userconfig/vault-tls/vault.ca"
+        tls_cert_file = "/vault/userconfig/vault-tls-crt/tls.crt"
+        tls_key_file = "/vault/userconfig/vault-tls-crt/tls.key"
+        tls_client_ca_file = "/vault/userconfig/vault-tls-ca/ca.crt"
         tls_require_and_verify_client_cert = false
-        tls_disable_client_certs = true
       }
 
       storage "file" {
@@ -127,38 +146,52 @@ server:
         listener "tcp" {
           address = "[::]:8200"
           cluster_address = "[::]:8201"
-          tls_cert_file = "/vault/userconfig/vault-tls/vault.crt"
-          tls_key_file = "/vault/userconfig/vault-tls/vault.key"
-          tls_client_ca_file = "/vault/userconfig/vault-tls/vault.ca"
+          tls_cert_file = "/vault/userconfig/vault-tls-crt/tls.crt"
+          tls_key_file = "/vault/userconfig/vault-tls-crt/tls.key"
+          tls_client_ca_file = "/vault/userconfig/vault-tls-ca/ca.crt"
           tls_require_and_verify_client_cert = false
-          tls_disable_client_certs = true
         }
 
         storage "raft" {
           path = "/vault/data"
           retry_join {
             leader_api_addr = "https://vault-0.vault-internal:8200"
+            leader_client_cert_file = "/vault/userconfig/vault-tls-crt/tls.crt"
+            leader_client_key_file = "/vault/userconfig/vault-tls-crt/tls.key"
+            leader_ca_cert_file = "/vault/userconfig/vault-tls-ca/ca.crt"
           }
           retry_join {
             leader_api_addr = "https://vault-1.vault-internal:8200"
+            leader_client_cert_file = "/vault/userconfig/vault-tls-crt/tls.crt"
+            leader_client_key_file = "/vault/userconfig/vault-tls-crt/tls.key"
+            leader_ca_cert_file = "/vault/userconfig/vault-tls-ca/ca.crt"
           }
           retry_join {
             leader_api_addr = "https://vault-2.vault-internal:8200"
+            leader_client_cert_file = "/vault/userconfig/vault-tls-crt/tls.crt"
+            leader_client_key_file = "/vault/userconfig/vault-tls-crt/tls.key"
+            leader_ca_cert_file = "/vault/userconfig/vault-tls-ca/ca.crt"
           }
           retry_join {
             leader_api_addr = "https://vault-3.vault-internal:8200"
+            leader_client_cert_file = "/vault/userconfig/vault-tls-crt/tls.crt"
+            leader_client_key_file = "/vault/userconfig/vault-tls-crt/tls.key"
+            leader_ca_cert_file = "/vault/userconfig/vault-tls-ca/ca.crt"
           }
           retry_join {
             leader_api_addr = "https://vault-4.vault-internal:8200"
+            leader_client_cert_file = "/vault/userconfig/vault-tls-crt/tls.crt"
+            leader_client_key_file = "/vault/userconfig/vault-tls-crt/tls.key"
+            leader_ca_cert_file = "/vault/userconfig/vault-tls-ca/ca.crt"
           }
 
           autopilot {
             cleanup_dead_servers = "true"
-            last_contact_threshold = "5s"
+            last_contact_threshold = "10s"
             last_contact_failure_threshold = "10m"
             max_trailing_logs = 100000
             min_quorum = 3
-            server_stabilization_time = "1m"
+            server_stabilization_time = "3m"
           }
 
         }
