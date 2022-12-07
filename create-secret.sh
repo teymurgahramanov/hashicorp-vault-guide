@@ -86,7 +86,7 @@ kubectl create namespace ${NAMESPACE} > /dev/null 2>&1
 kubectl -n ${NAMESPACE} create secret generic ${SECRET_NAME}-ca \
   --from-file=vault.ca=${TMPDIR}/vault.ca > /dev/null 2>&1
 
-kubectl -n ${NAMESPACE} create secret tls ${SECRET_NAME}-server \
+kubectl -n ${NAMESPACE} create secret tls ${SECRET_NAME}-crt \
   --cert=${TMPDIR}/vault.crt \
   --key=${TMPDIR}/vault.key
 
