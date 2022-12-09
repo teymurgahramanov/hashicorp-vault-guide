@@ -59,3 +59,14 @@ https://banzaicloud.com/docs/bank-vaults/mutating-webhook/deploy
 https://developer.hashicorp.com/vault/docs/platform/k8s/injector/annotations
 https://banzaicloud.com/docs/bank-vaults/mutating-webhook/annotations
 https://developer.hashicorp.com/vault/docs/platform/k8s/helm/configuration
+
+
+vault write auth/ldap/config \
+	url="ldap://ldap.example.com" \
+	discoverdn=true \
+	userattr=sAMAccountName \
+	userdn="OU=IT,OU=CBAR,DC=example,DC=com" \
+	groupdn="OU=IT,OU=CBAR,DC=example,DC=com" \
+	groupfilter="(&(objectClass=person)(uid={{.Username}}))" \
+	groupattr="memberOf" \
+	deny_null_bind=true
